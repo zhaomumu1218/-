@@ -1,462 +1,305 @@
-#include <bits/stdc++.h>
-#define LEN 35663//100001
-using namespace std;
-class Big_Int{
-    //54724
-    private:
-        int a[LEN];
-		int len;
-        bool f,p;
-    public:
-		//初始化构造函数运算 
-    	void clear()
-    	{
-    	    memset(a,0,sizeof a);
-    	    len=1;
-     	   f=0;
-    	    p=0;
-		}        
-       	Big_Int()
-    	{
-    		clear();
-    	}
-	    Big_Int(int x)
-    	{
-    		clear();
-	    	(*this)=x;
-	    }
-    	Big_Int(const Big_Int &x)
-    	{
-    		clear();
-    		(*this)=x;
-    	}
-    
-    //赋值运算 
-	 
-    	Big_Int operator =(const char *ch)
-    	{
-        	len=strlen(ch);
-        	if(ch[0]=='-') 
-        	{
-            	f=1;len--;
-            	for(int i=1;i<=len;i++) a[i]=ch[len-i+1]-'0';
-            	return *this;
-        	}
-        	for(int i=1;i<=len;i++) a[i]=ch[len-i]-'0';
-        	return *this;
-    	}
-	    Big_Int operator =(const int d)
-	    {
-	        char ch[LEN];
-	        sprintf(ch,"%d",d);
-	        *this=ch;
-		    return *this;
-    	}
-	
-	//四则基本运算 
 
-    	Big_Int operator +(Big_Int b)
-    	{
-        	if(f==1&&b.f==0)
-        	{
-            	f=0;
-            	return b-(*this);
-        	}
-        	else if(f==0&&b.f==1)
-        	{
-        	    b.f=0;
-        	    return (*this)-b;
-        	}
-        	Big_Int c;
-        	c.clear();
-			int l=max(len,b.len);
-        	for(int i=1;i<=l;i++)
-    	    {
-    	        c.a[i]+=a[i]+b.a[i];
-    	        c.a[i+1]=c.a[i]/10;
-    	        c.a[i]%=10;
-    	    }
-    	    if(c.a[l+1]) l++;
-    	    c.len=l;
-    	    c.f=f&&b.f;
-    	    return c;
-    	}
-    	Big_Int operator -(Big_Int b)
-    	{
-
-    	    if(f==1&&b.f==0)
-    	    {
-    	        b.f=1;
-    	        return b+(*this);
-    	    }
-    	    if(f==0&&b.f==1)
-    	    {
-    	        b.f=0;
-    	        return b+(*this);
-    	    }
-    	    if(f==1&&b.f==1)
-    	    {
-    	        b.f=0;
-  		        return b+(*this); 
-  	 	    }
-    	    Big_Int c;
-    	    c.clear();
-			if((*this)<b)
-    	    {
-    	        swap(*this,b);
-    	        c.f=1;
-    	    }
-			int l=max(len,b.len);
-    	    for(int i=1;i<=l;i++)
-    	    {
-    	        c.a[i]+=a[i]-b.a[i];
-    	        if(c.a[i]<0) c.a[i+1]--,c.a[i]+=10;
-    	    }
-    	    while(c.a[l]==0&&l>0) l--;
-    	    if(l==0) l=1;
-    	    c.len=l;
-    	    return c;
-    	}    	
-    	Big_Int operator *(Big_Int b)
-    	{
-    	    Big_Int c;
-    	    c.clear();
-    	    int l=len+b.len-1;
-    	    for(int i=1;i<=len;i++)
-    	    {
-    	        for(int j=1;j<=b.len;j++)
-   		        {
-    	            c.a[i+j-1]+=a[i]*b.a[j];
-    	            c.a[i+j]+=c.a[i+j-1]/10;
-    	            c.a[i+j-1]%=10;
-    	        }
-    	    }
-    	    while(c.a[l+1]!=0) l++;
-    	    c.len=l;
-    	    if((f==0&&b.f==1)||(f==1&&b.f==0)) c.f=1;
-    	    return c;
-    	}    	
-    	Big_Int operator /(Big_Int b)
-    	{
-    		if(b==0)
-    		{
-    			throw 0x7f;
-    		}
-			Big_Int a=(*this),c,t;
-			c.len=len-b.len+1;
-    		for(int i=c.len;i>=0;i--)
-    		{
-    			if(a==0) break;
-   		 		t.clear();
-    			t=b<<i;
-    			while(t<=a) 
-				{c.a[i+1]++;a-=t;}
-    		}
-    		while(!c.a[c.len]&&c.len>0) c.len--;
-    		if(c.len==0) c.len=1;
-    		if(f==0&&b.f==1) c.f=1;
-    		else if(f==1&&b.f==0) c.f=1;
-    		return c;
-    	}    	
-    	Big_Int operator %(Big_Int b)
-    	{
-    		Big_Int c=(*this)/b;
-    		b=b*c;
-    		return (*this)-b;
-    	}    	
-    	
-    	//比较运算 
-    	
-    	bool operator <=(Big_Int b)
-    	{
-    		return ((*this)<b||(*this)==b);
-    	}
-    	bool operator >=(Big_Int b)
-    	{
-    		return ((*this)>b||(*this)==b);
-    	}
-    	bool operator <(Big_Int b)
-    	{
-    	    if((*this)==b) return 0;
-    	    if(f&&!b.f) return 1;
-    	    else if(!f&&b.f) return 0;
-    	    else if(f==b.f&&f==0&&len<b.len) return 1;
-    	    else if(f==b.f&&f==0&&len>b.len) return 0;
-    	    else if(f==b.f&&f==1&&len<b.len) return 0;
-    	    else if(f==b.f&&f==1&&len>b.len) return 1;
-    	    else
-    	    {
-    	        int flag=-1;
-    	        for(int i=len;i>=1;i--)
-    	        {
-    	            if(a[i]>b.a[i]) 
-    	            {
-    	                flag=0;
-    	                break;
-    	            }
-    	            else if(a[i]<b.a[i])
-    	            {
-    	                break;
-   		            }
-    	        }
-    	        if(f==1) flag=!flag;
-    	        else if(f==-1) return 0;
-    	        return flag;
-    	    }
-    	}   
-    	bool operator ==(Big_Int b)
-    	{
-    	    if(f!=b.f) return 0;
-    	    if(len!=b.len) return 0;
-    	    for(int i=len;i>=1;i--)
-   		    {
-    	        if(a[i]!=b.a[i]) return 0;
-    	    }
-    	    return 1;
-    	}
-    	bool operator !=(Big_Int b)
-    	{
-    		return !((*this)==b);
-    	}
-    	bool operator !=(int b)
-    	{
-    		return !((*this)==b);
-    	}
-    	bool operator ==(int b)
-    	{
-    		Big_Int a=b;
-    		return a==(*this);
-    	}
-    	bool operator >(Big_Int b)
-    	{
-    	    if(!((*this)<b)&&!((*this)==b)) return 1;
-    	    else return 0;
-    	}
-
-		//递增（减）运算 
-
-    	Big_Int operator ++(int)
-    	{
-    		if(f==1&&!p) 
-    		{
-    			p=1;
-    			(*this)--;
-    			return *this;
-    		}
-    		a[1]++;
-    		int t=1;
-    		while(a[t]>9) 
-    		{
-    			a[t+1]++;
-    			a[t]%=10;
-    			t++;
-   		 	}
-    		while(a[len+1]) len++;
-    		if(len==1&&a[len]==0) f=0;
-    		p=0;
-    		return *this;
-    	}
-    	Big_Int operator --(int)
-    	{
-    		if(f==1&&!p)
-    		{
-    			(*this)++;
-    			p=1;
-    			return *this;
-    		}
-    		int t=1;
-   		 	a[t]--;
-    		while(a[t]<0)
-    		{
-    			a[t+1]--;
-    			a[t]+=10;
-    			t++;
-    		}
-    		while(a[len+1]) len++;
-    		if(len==1&&a[len]==0) f=0;
-    		p=0;
-    		return *this;
-    	}
-    	
-    	//四则运算扩展 
-    	
-    		//加法相关 
-    		
-    	Big_Int operator +(int b)
-    	{
-    		Big_Int c=b;
-    		return (*this)+c;
-    	}    	
-		void operator +=(Big_Int b)
-    	{
-    	    (*this)=(*this)+b;
-    	}
-		void operator +=(int b)
-		{
-			Big_Int c=b;
-			(*this)=(*this)+c; 
-		}
-			//减法相关 
-		    	
-		Big_Int operator -(int b)
-    	{
-    		Big_Int c=b;
-    		return (*this)-c;
-    	}
-    	void operator -=(Big_Int b)
-    	{
-    	    (*this)=(*this)-b;
-    	}
-    	void operator -=(int b)
-    	{
-    		Big_Int c=b;
-    		(*this)=(*this)-b;
-    	}    	
-    	
-    		//乘法相关 
-    	inline Big_Int operator *(int b)
-    	{
-    		/*Big_Int c=b;
-    		return (*this)*c;*/
-    		Big_Int c;
-    		for(int i=1;i<=len;i++)
-    		{
-    			c.a[i]+=a[i]*b;
-    			c.a[i+1]=c.a[i]/10;
-    			c.a[i]%=10;
-    		}
-    		c.len=len;
-    		while(c.a[c.len+1]!=0)
-			{
-			    c.len++;
-				c.a[c.len+1]=c.a[c.len]/10;
-				c.a[c.len]%=10;
-			}
-    		return c;
-    	}
-    	void operator *=(Big_Int b)
-    	{
-    	    (*this)=(*this)*b;
-    	}
-    	void operator *=(int b)
-    	{
-			(*this)=(*this)*b;
-		}
-		
-			//除法相关 
-			
-    	Big_Int operator /(int b)
-    	{
-    		Big_Int c=b;
-    		return (*this)/c;
-    	}
-		void operator /=(int b)
-		{
-    		Big_Int c=b;
-    		(*this)=(*this)/c;			
-		}		
-    	void operator /=(Big_Int b)
-    	{
-    		(*this)=(*this)/b;
-    	}
-		
-			//取模相关 
-		    	
-    	Big_Int operator %(int b)
-    	{
-    		Big_Int c=b;
-    		return (*this)%c;
-   		}		
-    	void operator %=(int b)
-    	{
-    		Big_Int c=b;
-    		(*this)=(*this)%c;
-   		}
-    	void operator %=(Big_Int b)
-    	{
-    		(*this)=(*this)%b;
-    	}		   
-		   
-		//特殊运算   
-		Big_Int abs()
-		{
-			Big_Int c=(*this);
-			c.f=0;return c;
-		}
-		Big_Int operator <<(int b)  //基于十进制的左移，所以是等同于*10 
-    	{
-    		Big_Int c;
-    		for(int i=b+1;i<=len+b;i++) 
-			  c.a[i]=a[i-b];
-    		c.len=len+b;
-    		return c;
-    	}
-    	Big_Int operator >>(int b)
-    	{
-    		Big_Int c;
-   		 	for(int i=b+1;i<=len;i++)
-    		{
-    			c.a[i-b]=a[i];
-   		 	}
-    		c.len=len-b;
-    		return c;
-    	}
-    	Big_Int pow(Big_Int b)
-    	{
-    		Big_Int a=(*this),ans=1;
-    		while(b!=0)
-    		{
-    			if(b.a[1]&1) ans*=a;
-    			a*=a;
-    			b/=2;
-    		}
-    		return ans;
-    	}
-    	Big_Int pow(int b)
-    	{
-    		Big_Int a=(*this),ans=1;
-			while(b!=0)
-			{
-				if(b&1) ans*=a;
-				a*=a;
-				b/=2;
-			}
-			return ans; 
-		}
-		Big_Int sqrt()
-		{
-			Big_Int x=(*this),a=(*this);
-			for(int i=1;i<=len*10;i++) x=(x+a/x)/2;
-			return x;
-		}
-		//转换函数 
-		void output()
-		{
-			while(a[len]==0) --len;
-			for(register int i=len;i>=1;--i) putchar(a[i]+'0');
-		}
-    	string cpp_str()
-    	{
-    	    string str;
-    	    if(len==0)
-    	    {
-    	        str="0";
-    	        return str;
-    	    }
-    	    if(f==1&&!(len==1&&a[1]==0)) str.push_back('-');
-    	    for(int i=len;i>=1;i--) str.push_back(a[i]+'0');
-     	   return str;
-    	}
+const double PI = acos(-1.0);
+struct Complex{
+    double x,y;
+    Complex(double _x = 0.0,double _y = 0.0){
+        x = _x;
+        y = _y;
+    }
+    Complex operator-(const Complex &b)const{
+        return Complex(x - b.x,y - b.y);
+    }
+    Complex operator+(const Complex &b)const{
+        return Complex(x + b.x,y + b.y);
+    }
+    Complex operator*(const Complex &b)const{
+        return Complex(x*b.x - y*b.y,x*b.y + y*b.x);
+    }
 };
-istream& operator >>(istream &in,Big_Int &a)
-{
-    string str;
-    in>>str;
-    a=str.c_str();
-    return in;
+void change(Complex y[],int len){
+    int i,j,k;
+    for(int i = 1,j = len/2;i<len-1;i++){
+        if(i < j)    swap(y[i],y[j]);
+        k = len/2;
+        while(j >= k){
+            j = j - k;
+            k = k/2;
+        }
+        if(j < k)    j+=k;
+    }
 }
-ostream& operator <<(ostream &out,Big_Int &a)
-{
-    out<<a.cpp_str();
-    return out;
+void fft(Complex y[],int len,int on){
+    change(y,len);
+    for(int h = 2;h <= len;h<<=1){
+        Complex wn(cos(on*2*PI/h),sin(on*2*PI/h));
+        for(int j = 0;j < len;j += h){
+            Complex w(1,0);
+            for(int k = j;k < j + h/2;k++){
+                Complex u = y[k];
+                Complex t = w*y[k + h/2];
+                y[k] = u + t;
+                y[k + h/2] = u - t;
+                w = w*wn;
+            }
+        }
+    }
+    if(on == -1){
+        for(int i = 0;i < len;i++){
+            y[i].x /= len;
+        }
+    }
 }
+class BigInt
+{
+#define Value(x, nega) ((nega) ? -(x) : (x))
+#define At(vec, index) ((index) < vec.size() ? vec[(index)] : 0)
+    static int absComp(const BigInt &lhs, const BigInt &rhs)
+    {
+        if (lhs.size() != rhs.size())
+            return lhs.size() < rhs.size() ? -1 : 1;
+        for (int i = lhs.size() - 1; i >= 0; --i)
+            if (lhs[i] != rhs[i])
+                return lhs[i] < rhs[i] ? -1 : 1;
+        return 0;
+    }
+    using Long = long long;
+    const static int Exp = 9;
+    const static Long Mod = 1000000000;
+    mutable std::vector<Long> val;
+    mutable bool nega = false;
+    void trim() const
+    {
+        while (val.size() && val.back() == 0)
+            val.pop_back();
+        if (val.empty())
+            nega = false;
+    }
+    int size() const { return val.size(); }
+    Long &operator[](int index) const { return val[index]; }
+    Long &back() const { return val.back(); }
+    BigInt(int size, bool nega) : val(size), nega(nega) {}
+    BigInt(const std::vector<Long> &val, bool nega) : val(val), nega(nega) {}
+
+public:
+    friend std::ostream &operator<<(std::ostream &os, const BigInt &n)
+    {
+        if (n.size())
+        {
+            if (n.nega)
+                putchar('-');
+            for (int i = n.size() - 1; i >= 0; --i)
+            {
+                if (i == n.size() - 1)
+                    printf("%lld", n[i]);
+                else
+                    printf("%0*lld", n.Exp, n[i]);
+            }
+        }
+        else
+            putchar('0');
+        return os;
+    }
+    friend BigInt operator+(const BigInt &lhs, const BigInt &rhs)
+    {
+        BigInt ret(lhs);
+        return ret += rhs;
+    }
+    friend BigInt operator-(const BigInt &lhs, const BigInt &rhs)
+    {
+        BigInt ret(lhs);
+        return ret -= rhs;
+    }
+    BigInt(Long x = 0)
+    {
+        if (x < 0)
+            x = -x, nega = true;
+        while (x >= Mod)
+            val.push_back(x % Mod), x /= Mod;
+        if (x)
+            val.push_back(x);
+    }
+    BigInt(const char *s)
+    {
+        int bound = 0, pos;
+        if (s[0] == '-')
+            nega = true, bound = 1;
+        Long cur = 0, pow = 1;
+        for (pos = strlen(s) - 1; pos >= Exp + bound - 1; pos -= Exp, val.push_back(cur), cur = 0, pow = 1)
+            for (int i = pos; i > pos - Exp; --i)
+                cur += (s[i] - '0') * pow, pow *= 10;
+        for (cur = 0, pow = 1; pos >= bound; --pos)
+            cur += (s[pos] - '0') * pow, pow *= 10;
+        if (cur)
+            val.push_back(cur);
+    }
+    BigInt &operator=(const char *s){
+        BigInt n(s);
+        *this = n;
+        return n;
+    }
+    BigInt &operator=(const Long x){
+        BigInt n(x);
+        *this = n;
+        return n;
+    }
+    friend std::istream &operator>>(std::istream &is, BigInt &n){
+        string s;
+        is >> s;
+        n=(char*)s.data();
+        return is;
+    }
+    BigInt &operator+=(const BigInt &rhs)
+    {
+        const int cap = std::max(size(), rhs.size()) + 1;
+        val.resize(cap);
+        int carry = 0;
+        for (int i = 0; i < cap - 1; ++i)
+        {
+            val[i] = Value(val[i], nega) + Value(At(rhs, i), rhs.nega) + carry, carry = 0;
+            if (val[i] >= Mod)
+                val[i] -= Mod, carry = 1;
+            else if (val[i] < 0)
+                val[i] += Mod, carry = -1;
+        }
+        if ((val.back() = carry) == -1) //assert(val.back() == 1 or 0 or -1)
+        {
+            nega = true, val.pop_back();
+            bool tailZero = true;
+            for (int i = 0; i < cap - 1; ++i)
+            {
+                if (tailZero && val[i])
+                    val[i] = Mod - val[i], tailZero = false;
+                else
+                    val[i] = Mod - 1 - val[i];
+            }
+        }
+        trim();
+        return *this;
+    }
+    friend BigInt operator-(const BigInt &rhs)
+    {
+        BigInt ret(rhs);
+        ret.nega ^= 1;
+        return ret;
+    }
+    BigInt &operator-=(const BigInt &rhs)
+    {
+        rhs.nega ^= 1;
+        *this += rhs;
+        rhs.nega ^= 1;
+        return *this;
+    }
+    friend BigInt operator*(const BigInt &lhs, const BigInt &rhs)
+    {
+        int len=1;
+        BigInt ll=lhs,rr=rhs;
+        ll.nega = lhs.nega ^ rhs.nega;
+        while(len<2*lhs.size()||len<2*rhs.size())len<<=1;
+        ll.val.resize(len),rr.val.resize(len);
+        Complex x1[len],x2[len];
+        for(int i=0;i<len;i++){
+            Complex nx(ll[i],0.0),ny(rr[i],0.0);
+            x1[i]=nx;
+            x2[i]=ny;
+        }
+        fft(x1,len,1);
+        fft(x2,len,1);
+        for(int i = 0 ; i < len; i++)
+            x1[i] = x1[i] * x2[i];
+        fft( x1 , len , -1 );
+        for(int i = 0 ; i < len; i++)
+            ll[i] = int( x1[i].x + 0.5 );
+        for(int i = 0 ; i < len; i++){
+            ll[i+1]+=ll[i]/Mod;
+            ll[i]%=Mod;
+        }
+        ll.trim();
+        return ll;
+    }
+    friend BigInt operator*(const BigInt &lhs, const Long &x){
+        BigInt ret=lhs;
+        bool negat = ( x < 0 );
+        Long xx = (negat) ? -x : x;
+        ret.nega ^= negat;
+        ret.val.push_back(0);
+        ret.val.push_back(0);
+        for(int i = 0; i < ret.size(); i++)
+            ret[i]*=xx;
+        for(int i = 0; i < ret.size(); i++){
+            ret[i+1]+=ret[i]/Mod;
+            ret[i] %= Mod;
+        }
+        ret.trim();
+        return ret;
+    }
+    BigInt &operator*=(const BigInt &rhs) { return *this = *this * rhs; }
+    BigInt &operator*=(const Long &x) { return *this = *this * x; }
+    friend BigInt operator/(const BigInt &lhs, const BigInt &rhs)
+    {
+        static std::vector<BigInt> powTwo{BigInt(1)};
+        static std::vector<BigInt> estimate;
+        estimate.clear();
+        if (absComp(lhs, rhs) < 0)
+            return BigInt();
+        BigInt cur = rhs;
+        int cmp;
+        while ((cmp = absComp(cur, lhs)) <= 0)
+        {
+            estimate.push_back(cur), cur += cur;
+            if (estimate.size() >= powTwo.size())
+                powTwo.push_back(powTwo.back() + powTwo.back());
+        }
+        if (cmp == 0)
+            return BigInt(powTwo.back().val, lhs.nega ^ rhs.nega);
+        BigInt ret = powTwo[estimate.size() - 1];
+        cur = estimate[estimate.size() - 1];
+        for (int i = estimate.size() - 1; i >= 0 && cmp != 0; --i)
+            if ((cmp = absComp(cur + estimate[i], lhs)) <= 0)
+                cur += estimate[i], ret += powTwo[i];
+        ret.nega = lhs.nega ^ rhs.nega;
+        return ret;
+    }
+    friend BigInt operator/(const BigInt &num,const Long &x){
+        bool negat = ( x < 0 );
+        Long xx = (negat) ? -x : x;
+        BigInt ret;
+        Long k = 0;
+        ret.val.resize( num.size() );
+        ret.nega = (num.nega ^ negat);
+        for(int i = num.size() - 1 ;i >= 0; i--){
+            ret[i] = ( k * Mod + num[i]) / xx;
+            k = ( k * Mod + num[i]) % xx;
+        }
+        ret.trim();
+        return ret;
+    }
+    bool operator==(const BigInt &rhs) const
+    {
+        return nega == rhs.nega && val == rhs.val;
+    }
+    bool operator!=(const BigInt &rhs) const { return nega != rhs.nega || val != rhs.val; }
+    bool operator>=(const BigInt &rhs) const { return !(*this < rhs); }
+    bool operator>(const BigInt &rhs) const { return !(*this <= rhs); }
+    bool operator<=(const BigInt &rhs) const
+    {
+        if (nega && !rhs.nega)
+            return true;
+        if (!nega && rhs.nega)
+            return false;
+        int cmp = absComp(*this, rhs);
+        return nega ? cmp >= 0 : cmp <= 0;
+    }
+    bool operator<(const BigInt &rhs) const
+    {
+        if (nega && !rhs.nega)
+            return true;
+        if (!nega && rhs.nega)
+            return false;
+        return (absComp(*this, rhs) < 0) ^ nega;
+    }
+    void swap(const BigInt &rhs) const
+    {
+        std::swap(val, rhs.val);
+        std::swap(nega, rhs.nega);
+    }
+};
