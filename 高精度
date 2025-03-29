@@ -1,0 +1,462 @@
+#include <bits/stdc++.h>
+#define LEN 35663//100001
+using namespace std;
+class Big_Int{
+    //54724
+    private:
+        int a[LEN];
+		int len;
+        bool f,p;
+    public:
+		//初始化构造函数运算 
+    	void clear()
+    	{
+    	    memset(a,0,sizeof a);
+    	    len=1;
+     	   f=0;
+    	    p=0;
+		}        
+       	Big_Int()
+    	{
+    		clear();
+    	}
+	    Big_Int(int x)
+    	{
+    		clear();
+	    	(*this)=x;
+	    }
+    	Big_Int(const Big_Int &x)
+    	{
+    		clear();
+    		(*this)=x;
+    	}
+    
+    //赋值运算 
+	 
+    	Big_Int operator =(const char *ch)
+    	{
+        	len=strlen(ch);
+        	if(ch[0]=='-') 
+        	{
+            	f=1;len--;
+            	for(int i=1;i<=len;i++) a[i]=ch[len-i+1]-'0';
+            	return *this;
+        	}
+        	for(int i=1;i<=len;i++) a[i]=ch[len-i]-'0';
+        	return *this;
+    	}
+	    Big_Int operator =(const int d)
+	    {
+	        char ch[LEN];
+	        sprintf(ch,"%d",d);
+	        *this=ch;
+		    return *this;
+    	}
+	
+	//四则基本运算 
+
+    	Big_Int operator +(Big_Int b)
+    	{
+        	if(f==1&&b.f==0)
+        	{
+            	f=0;
+            	return b-(*this);
+        	}
+        	else if(f==0&&b.f==1)
+        	{
+        	    b.f=0;
+        	    return (*this)-b;
+        	}
+        	Big_Int c;
+        	c.clear();
+			int l=max(len,b.len);
+        	for(int i=1;i<=l;i++)
+    	    {
+    	        c.a[i]+=a[i]+b.a[i];
+    	        c.a[i+1]=c.a[i]/10;
+    	        c.a[i]%=10;
+    	    }
+    	    if(c.a[l+1]) l++;
+    	    c.len=l;
+    	    c.f=f&&b.f;
+    	    return c;
+    	}
+    	Big_Int operator -(Big_Int b)
+    	{
+
+    	    if(f==1&&b.f==0)
+    	    {
+    	        b.f=1;
+    	        return b+(*this);
+    	    }
+    	    if(f==0&&b.f==1)
+    	    {
+    	        b.f=0;
+    	        return b+(*this);
+    	    }
+    	    if(f==1&&b.f==1)
+    	    {
+    	        b.f=0;
+  		        return b+(*this); 
+  	 	    }
+    	    Big_Int c;
+    	    c.clear();
+			if((*this)<b)
+    	    {
+    	        swap(*this,b);
+    	        c.f=1;
+    	    }
+			int l=max(len,b.len);
+    	    for(int i=1;i<=l;i++)
+    	    {
+    	        c.a[i]+=a[i]-b.a[i];
+    	        if(c.a[i]<0) c.a[i+1]--,c.a[i]+=10;
+    	    }
+    	    while(c.a[l]==0&&l>0) l--;
+    	    if(l==0) l=1;
+    	    c.len=l;
+    	    return c;
+    	}    	
+    	Big_Int operator *(Big_Int b)
+    	{
+    	    Big_Int c;
+    	    c.clear();
+    	    int l=len+b.len-1;
+    	    for(int i=1;i<=len;i++)
+    	    {
+    	        for(int j=1;j<=b.len;j++)
+   		        {
+    	            c.a[i+j-1]+=a[i]*b.a[j];
+    	            c.a[i+j]+=c.a[i+j-1]/10;
+    	            c.a[i+j-1]%=10;
+    	        }
+    	    }
+    	    while(c.a[l+1]!=0) l++;
+    	    c.len=l;
+    	    if((f==0&&b.f==1)||(f==1&&b.f==0)) c.f=1;
+    	    return c;
+    	}    	
+    	Big_Int operator /(Big_Int b)
+    	{
+    		if(b==0)
+    		{
+    			throw 0x7f;
+    		}
+			Big_Int a=(*this),c,t;
+			c.len=len-b.len+1;
+    		for(int i=c.len;i>=0;i--)
+    		{
+    			if(a==0) break;
+   		 		t.clear();
+    			t=b<<i;
+    			while(t<=a) 
+				{c.a[i+1]++;a-=t;}
+    		}
+    		while(!c.a[c.len]&&c.len>0) c.len--;
+    		if(c.len==0) c.len=1;
+    		if(f==0&&b.f==1) c.f=1;
+    		else if(f==1&&b.f==0) c.f=1;
+    		return c;
+    	}    	
+    	Big_Int operator %(Big_Int b)
+    	{
+    		Big_Int c=(*this)/b;
+    		b=b*c;
+    		return (*this)-b;
+    	}    	
+    	
+    	//比较运算 
+    	
+    	bool operator <=(Big_Int b)
+    	{
+    		return ((*this)<b||(*this)==b);
+    	}
+    	bool operator >=(Big_Int b)
+    	{
+    		return ((*this)>b||(*this)==b);
+    	}
+    	bool operator <(Big_Int b)
+    	{
+    	    if((*this)==b) return 0;
+    	    if(f&&!b.f) return 1;
+    	    else if(!f&&b.f) return 0;
+    	    else if(f==b.f&&f==0&&len<b.len) return 1;
+    	    else if(f==b.f&&f==0&&len>b.len) return 0;
+    	    else if(f==b.f&&f==1&&len<b.len) return 0;
+    	    else if(f==b.f&&f==1&&len>b.len) return 1;
+    	    else
+    	    {
+    	        int flag=-1;
+    	        for(int i=len;i>=1;i--)
+    	        {
+    	            if(a[i]>b.a[i]) 
+    	            {
+    	                flag=0;
+    	                break;
+    	            }
+    	            else if(a[i]<b.a[i])
+    	            {
+    	                break;
+   		            }
+    	        }
+    	        if(f==1) flag=!flag;
+    	        else if(f==-1) return 0;
+    	        return flag;
+    	    }
+    	}   
+    	bool operator ==(Big_Int b)
+    	{
+    	    if(f!=b.f) return 0;
+    	    if(len!=b.len) return 0;
+    	    for(int i=len;i>=1;i--)
+   		    {
+    	        if(a[i]!=b.a[i]) return 0;
+    	    }
+    	    return 1;
+    	}
+    	bool operator !=(Big_Int b)
+    	{
+    		return !((*this)==b);
+    	}
+    	bool operator !=(int b)
+    	{
+    		return !((*this)==b);
+    	}
+    	bool operator ==(int b)
+    	{
+    		Big_Int a=b;
+    		return a==(*this);
+    	}
+    	bool operator >(Big_Int b)
+    	{
+    	    if(!((*this)<b)&&!((*this)==b)) return 1;
+    	    else return 0;
+    	}
+
+		//递增（减）运算 
+
+    	Big_Int operator ++(int)
+    	{
+    		if(f==1&&!p) 
+    		{
+    			p=1;
+    			(*this)--;
+    			return *this;
+    		}
+    		a[1]++;
+    		int t=1;
+    		while(a[t]>9) 
+    		{
+    			a[t+1]++;
+    			a[t]%=10;
+    			t++;
+   		 	}
+    		while(a[len+1]) len++;
+    		if(len==1&&a[len]==0) f=0;
+    		p=0;
+    		return *this;
+    	}
+    	Big_Int operator --(int)
+    	{
+    		if(f==1&&!p)
+    		{
+    			(*this)++;
+    			p=1;
+    			return *this;
+    		}
+    		int t=1;
+   		 	a[t]--;
+    		while(a[t]<0)
+    		{
+    			a[t+1]--;
+    			a[t]+=10;
+    			t++;
+    		}
+    		while(a[len+1]) len++;
+    		if(len==1&&a[len]==0) f=0;
+    		p=0;
+    		return *this;
+    	}
+    	
+    	//四则运算扩展 
+    	
+    		//加法相关 
+    		
+    	Big_Int operator +(int b)
+    	{
+    		Big_Int c=b;
+    		return (*this)+c;
+    	}    	
+		void operator +=(Big_Int b)
+    	{
+    	    (*this)=(*this)+b;
+    	}
+		void operator +=(int b)
+		{
+			Big_Int c=b;
+			(*this)=(*this)+c; 
+		}
+			//减法相关 
+		    	
+		Big_Int operator -(int b)
+    	{
+    		Big_Int c=b;
+    		return (*this)-c;
+    	}
+    	void operator -=(Big_Int b)
+    	{
+    	    (*this)=(*this)-b;
+    	}
+    	void operator -=(int b)
+    	{
+    		Big_Int c=b;
+    		(*this)=(*this)-b;
+    	}    	
+    	
+    		//乘法相关 
+    	inline Big_Int operator *(int b)
+    	{
+    		/*Big_Int c=b;
+    		return (*this)*c;*/
+    		Big_Int c;
+    		for(int i=1;i<=len;i++)
+    		{
+    			c.a[i]+=a[i]*b;
+    			c.a[i+1]=c.a[i]/10;
+    			c.a[i]%=10;
+    		}
+    		c.len=len;
+    		while(c.a[c.len+1]!=0)
+			{
+			    c.len++;
+				c.a[c.len+1]=c.a[c.len]/10;
+				c.a[c.len]%=10;
+			}
+    		return c;
+    	}
+    	void operator *=(Big_Int b)
+    	{
+    	    (*this)=(*this)*b;
+    	}
+    	void operator *=(int b)
+    	{
+			(*this)=(*this)*b;
+		}
+		
+			//除法相关 
+			
+    	Big_Int operator /(int b)
+    	{
+    		Big_Int c=b;
+    		return (*this)/c;
+    	}
+		void operator /=(int b)
+		{
+    		Big_Int c=b;
+    		(*this)=(*this)/c;			
+		}		
+    	void operator /=(Big_Int b)
+    	{
+    		(*this)=(*this)/b;
+    	}
+		
+			//取模相关 
+		    	
+    	Big_Int operator %(int b)
+    	{
+    		Big_Int c=b;
+    		return (*this)%c;
+   		}		
+    	void operator %=(int b)
+    	{
+    		Big_Int c=b;
+    		(*this)=(*this)%c;
+   		}
+    	void operator %=(Big_Int b)
+    	{
+    		(*this)=(*this)%b;
+    	}		   
+		   
+		//特殊运算   
+		Big_Int abs()
+		{
+			Big_Int c=(*this);
+			c.f=0;return c;
+		}
+		Big_Int operator <<(int b)  //基于十进制的左移，所以是等同于*10 
+    	{
+    		Big_Int c;
+    		for(int i=b+1;i<=len+b;i++) 
+			  c.a[i]=a[i-b];
+    		c.len=len+b;
+    		return c;
+    	}
+    	Big_Int operator >>(int b)
+    	{
+    		Big_Int c;
+   		 	for(int i=b+1;i<=len;i++)
+    		{
+    			c.a[i-b]=a[i];
+   		 	}
+    		c.len=len-b;
+    		return c;
+    	}
+    	Big_Int pow(Big_Int b)
+    	{
+    		Big_Int a=(*this),ans=1;
+    		while(b!=0)
+    		{
+    			if(b.a[1]&1) ans*=a;
+    			a*=a;
+    			b/=2;
+    		}
+    		return ans;
+    	}
+    	Big_Int pow(int b)
+    	{
+    		Big_Int a=(*this),ans=1;
+			while(b!=0)
+			{
+				if(b&1) ans*=a;
+				a*=a;
+				b/=2;
+			}
+			return ans; 
+		}
+		Big_Int sqrt()
+		{
+			Big_Int x=(*this),a=(*this);
+			for(int i=1;i<=len*10;i++) x=(x+a/x)/2;
+			return x;
+		}
+		//转换函数 
+		void output()
+		{
+			while(a[len]==0) --len;
+			for(register int i=len;i>=1;--i) putchar(a[i]+'0');
+		}
+    	string cpp_str()
+    	{
+    	    string str;
+    	    if(len==0)
+    	    {
+    	        str="0";
+    	        return str;
+    	    }
+    	    if(f==1&&!(len==1&&a[1]==0)) str.push_back('-');
+    	    for(int i=len;i>=1;i--) str.push_back(a[i]+'0');
+     	   return str;
+    	}
+};
+istream& operator >>(istream &in,Big_Int &a)
+{
+    string str;
+    in>>str;
+    a=str.c_str();
+    return in;
+}
+ostream& operator <<(ostream &out,Big_Int &a)
+{
+    out<<a.cpp_str();
+    return out;
+}
