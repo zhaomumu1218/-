@@ -1,8 +1,7 @@
+
 #define LOCAL
-namespace ly
-{
-    namespace IO
-    {
+namespace ly{
+    namespace IO{
         #ifndef LOCAL
             constexpr auto maxn=1<<20;
             char in[maxn],out[maxn],*p1=in,*p2=in,*p3=out;
@@ -11,19 +10,16 @@ namespace ly
             #define putchar(x) (p3==out+maxn&&(flush(),p3=out),*p3++=(x))
             class Flush{public:~Flush(){flush();}}_;
         #endif
-        namespace usr
-        {
+        namespace usr{
             template<typename type>
-            inline type read(type &x)
-            {
+            inline type read(type &x){
                 x=0;bool flag(0);char ch=getchar();
                 while(!isdigit(ch)) flag^=ch=='-',ch=getchar();
                 while(isdigit(ch)) x=(x<<1)+(x<<3)+(ch^48),ch=getchar();
                 return flag?x=-x:x;
             }
             template<typename type>
-            inline void write(type x)
-            {
+            inline void write(type x){
                 x<0?x=-x,putchar('-'):0;
                 static short Stack[50],top(0);
                 do Stack[++top]=x%10,x/=10;while(x);
