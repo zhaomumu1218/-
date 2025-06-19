@@ -52,7 +52,7 @@
 			"    }using namespace IO::usr;",
 			"}using namespace lsy::IO::usr;",
 			"signed main(){",
-			"	$0"，
+			"	$0",
 			"    return 0;",
 			"}",
         ],
